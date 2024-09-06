@@ -14,5 +14,4 @@ variable "common_tags" {
     Name = "terraform"
     Env  = "dev"
   }
-  nullable  = false
 }
