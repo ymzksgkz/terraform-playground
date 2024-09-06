@@ -1,0 +1,6 @@
+project_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+common_tags = {
+  Name = "terraform"
+  Env  = "dev"
+}

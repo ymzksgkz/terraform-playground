@@ -1,0 +1,6 @@
+export AWS_PROFILE="xxxxxx"
+
+export BACKEND_BUCKET="xxxxxxxxxxxxxxxxxxxxxxx"
+export DYNAMO_DB_TABLE="xxxxxxxxxxxxxxxxxxxxxxx"
+
+export TF_VAR_region="ap-northeast-1"
