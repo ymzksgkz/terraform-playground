@@ -8,7 +8,6 @@ cp .envrc.sample .envrc
 .envrc に BACKEND_BUCKET を設定
 .envrc に DYNAMO_DB_TABLE を設定
 .envrc に TF_VAR_region を設定
-
 direnv allow
 
 # terraform.tfvars 準備
@@ -18,15 +17,15 @@ terraform.tfvars に common_tags を設定
 
 # tfbackend 準備
 aws s3 mb s3://$BACKEND_BUCKET
-aws s3 rb s3://$BACKEND_BUCKET
+$ aws s3 rb s3://$BACKEND_BUCKET # 削除
 
 aws dynamodb create-table \
---table-name terraform-state-lock \
---attribute-definitions AttributeName=LockID,AttributeType=S \
---key-schema AttributeName=LockID,KeyType=HASH \
---billing-mode PAY_PER_REQUEST
+  --table-name $DYNAMO_DB_TABLE \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
 
-aws dynamodb delete-table --table-name terraform-state-lock
+$ aws dynamodb delete-table --table-name $$DYNAMO_DB_TABLE # 削除
 
 # terraform インストール
 asdf plugin add terraform
@@ -34,12 +33,14 @@ asdf list all terraform
 asdf install terraform 1.9.5
 asdf global terraform 1.9.5
 
+terraform version # 1.9.5
+
 
 # terraform 環境初期化
 terraform init \
   -backend-config="region=$TF_VAR_region" \
   -backend-config="bucket=$BACKEND_BUCKET" \
-  -backend-config="dynamodb_table=$DYNAMO_DB_TABLE" \
+  -backend-config="dynamodb_table=$DYNAMO_DB_TABLE"
 
 terraform validate
 terraform plan
