@@ -56,7 +56,7 @@ $ terraform version # 1.9.5
 ```shell
 $ terraform init \
   -backend-config="region=$TF_VAR_region" \
-  -backend-config="bucket=$BACKEND_BUCKET" \
+  -backend-config="bucket=${BACKEND_BUCKET}-${TF_VAR_project_id}" \
   -backend-config="dynamodb_table=${DYNAMO_DB_TABLE}-${TF_VAR_project_id}"
 ```
 ---
