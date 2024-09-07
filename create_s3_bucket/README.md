@@ -14,6 +14,7 @@ $ cp .envrc.sample .envrc
 # .envrc に BACKEND_BUCKET を設定。state の保存先
 # .envrc に DYNAMO_DB_TABLE を設定。state のロック用
 # .envrc に TF_VAR_region を設定。var.region として参照可能
+# .envrc に TF_VAR_project_id を設定。var.project_id として参照可能
 $ direnv allow
 ```
 ---
@@ -22,7 +23,6 @@ $ direnv allow
 - コード内で参照する変数を設定
 ```shell
 $ cp terraform.tfvars_sample terraform.tfvars
-# terraform.tfvars に project_id を設定。リソース間で同じサービスのリソースを識別するためのID
 # terraform.tfvars に common_tags を設定。後で Tag でリソースの絞り込みが行えるようにする（任意）
 ```
 ---
@@ -30,10 +30,10 @@ $ cp terraform.tfvars_sample terraform.tfvars
 # backend 準備
 - state の保存先とロック用の DynamoDB テーブルを作成
 ```shell
-$ aws s3 mb s3://$BACKEND_BUCKET
+$ aws s3 mb s3://${BACKEND_BUCKET}-${TF_VAR_project_id} 
 
 $ aws dynamodb create-table \
-  --table-name $DYNAMO_DB_TABLE \
+  --table-name ${DYNAMO_DB_TABLE}-${TF_VAR_project_id} \
   --attribute-definitions AttributeName=LockID,AttributeType=S \
   --key-schema AttributeName=LockID,KeyType=HASH \
   --billing-mode PAY_PER_REQUEST
@@ -57,7 +57,8 @@ $ terraform version # 1.9.5
 $ terraform init \
   -backend-config="region=$TF_VAR_region" \
   -backend-config="bucket=$BACKEND_BUCKET" \
-  -backend-config="dynamodb_table=$DYNAMO_DB_TABLE"
+  -backend-config="dynamodb_table=${DYNAMO_DB_TABLE}-${TF_VAR_project_id}"
+  -backend-config="project_id=$TF_VAR_project_id"
 ```
 ---
 
@@ -76,7 +77,7 @@ $ terraform apply
 
 ```shell
 # terraform destroy
-# aws s3 rb s3://$BACKEND_BUCKET --force
-# aws dynamodb delete-table --table-name $DYNAMO_DB_TABLE
+# aws s3 rb s3://${BACKEND_BUCKET}-${TF_VAR_project_id} --force
+# aws dynamodb delete-table --table-name ${DYNAMO_DB_TABLE}-${TF_VAR_project_id}
 ```
 ---
