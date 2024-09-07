@@ -1,0 +1,12 @@
+# --profile=xxxxxx を入力しないで済むようにする
+export AWS_PROFILE="xxxxxx"
+
+# backend の設定
+export BACKEND_BUCKET="xxxxxxxxxxxxxxxxxxxxxxx"
+export DYNAMO_DB_TABLE="xxxxxxxxxxxxxxxxxxxxxxx"
+
+# リージョン
+export TF_VAR_region="ap-northeast-1"
+
+# プロジェクトID。どの terraform プロジェクト管理下であるか示す
+export TF_VAR_project_id="xxxxxx"
