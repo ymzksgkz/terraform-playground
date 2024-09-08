@@ -62,6 +62,12 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
+# ロググループ
+resource "aws_cloudwatch_log_group" "lambda_log_group" {
+  name              = "/aws/lambda/s3-upload-function-${var.project_id}"
+  retention_in_days = 7  # 7日間保持
+}
+
 # function
 resource "aws_lambda_function" "function" {
   function_name = "s3-upload-function-${var.project_id}"
