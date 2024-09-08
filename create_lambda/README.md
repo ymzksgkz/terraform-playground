@@ -61,11 +61,30 @@ $ terraform init \
 ```
 ---
 
-# リソース操作
+# 実行
+- ここでは単純な Lambda 関数を実行するリソースを作成する
 ```shell
-$ terraform validate
-$ terraform plan
+# lambda で実行する関数を作成する
+$ cat << EOF >> index.js
+exports.handler = async (event) => {
+    console.log("Event: ", event);
+    return {
+        statusCode: 200,
+        body: JSON.stringify('Hello from Lambda!'),
+    };
+};
+EOF
+
+$ zip lambda_function.zip index.js
+$ rm index.js
+
+# 反映
 $ terraform apply
+
+# 動作確認
+$ aws lambda invoke --function-name s3-upload-function-${TF_VAR_project_id} output.json
+$ less output.json
+$ rm output.json
 ```
 ---
 
