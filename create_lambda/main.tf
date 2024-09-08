@@ -42,6 +42,25 @@ resource "aws_iam_role" "iam_for_lambda" {
   })
 }
 
+# ログ出力用のポリシー
+resource "aws_iam_role_policy" "lambda_policy" {
+  role = aws_iam_role.iam_for_lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        Effect = "Allow",
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
 
 # function
 resource "aws_lambda_function" "function" {
@@ -52,4 +71,25 @@ resource "aws_lambda_function" "function" {
   handler       = "index.handler"
   memory_size   = 128
   timeout       = 30
+}
+
+# Lambda実行権限
+resource "aws_lambda_permission" "allow_s3_invoke" {
+  statement_id  = "AllowS3Invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.function.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.target_bucket.arn
+}
+
+# S3バケット通知リソース
+resource "aws_s3_bucket_notification" "bucket_notification" {
+  bucket = aws_s3_bucket.target_bucket.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.function.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3_invoke]
 }

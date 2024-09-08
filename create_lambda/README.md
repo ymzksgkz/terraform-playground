@@ -62,29 +62,62 @@ $ terraform init \
 ---
 
 # 実行
-- ここでは単純な Lambda 関数を実行するリソースを作成する
+- bucket にファイルをアップロードすると実行される関数を作成
 ```shell
-# lambda で実行する関数を作成する
+# lambda にデプロイする関数を作成する
 $ cat << EOF >> index.js
 exports.handler = async (event) => {
-    console.log("Event: ", event);
+    console.log("Event: ", event)
     return {
         statusCode: 200,
-        body: JSON.stringify('Hello from Lambda!'),
-    };
-};
+        body: JSON.stringify('complete!'),
+    }
+}
 EOF
 
-$ zip lambda_function.zip index.js
-$ rm index.js
+$ zip lambda_function.zip index.js && rm index.js
 
 # 反映
 $ terraform apply
+```
 
+- 関数の実行
+```shell
 # 動作確認
-$ aws lambda invoke --function-name s3-upload-function-${TF_VAR_project_id} output.json
-$ less output.json
-$ rm output.json
+# ログを見ておく
+$ logGroupName=$(aws logs describe-log-groups | jq ".logGroups[] | select(.logGroupName | contains(\"${TF_VAR_project_id}\")) | .logGroupName" -r)
+$ aws logs tail --follow $logGroupName
+
+# 一時ファイルを生成してアップロードしてローカルのファイルは削除する
+# これで lambda が実行されるはず
+$ echo "txt_$(date -u +%Y-%m-%d_%H-%M-%S)" > test.txt \
+    && aws s3 cp test.txt s3://"target-bucket-${TF_VAR_project_id}"/ \
+    && rm test.txt
+```
+
+- 関数の更新
+```shell
+$ tee index.js > /dev/null << 'EOF'
+exports.handler = async ({ Records }) => {
+    const [event] = Records;
+    const { eventTime, eventName, requestParameters, s3 } = event;
+    console.log(`eventTime: ${eventTime}, `, `eventName: ${eventName}, `, `sourceIPAddress: ${requestParameters.sourceIPAddress}`);
+    
+    const { key, size } = s3.object;
+    console.log(`key: ${key}, `, `size: ${size}`);
+    
+    return {
+        statusCode: 200,
+        body: JSON.stringify('complete!'),
+    };
+}
+EOF
+
+$ zip lambda_function.zip index.js && rm index.js && \
+    aws lambda update-function-code \
+      --function-name "s3-upload-function-${TF_VAR_project_id}" \
+      --zip-file fileb://lambda_function.zip && \
+    rm lambda_function.zip
 ```
 ---
 
